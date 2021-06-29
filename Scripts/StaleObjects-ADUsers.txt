@@ -8,7 +8,7 @@ c. Set the target Inactive Days at $DaysInactive
 
 1. Users within array to be migrated to $TargetOU either via array or CSV, specified by technician
 2. After users have been migrated, script will Disable 'Protect from Accidental Deletion' at OU level
-3. Users within $Target OU will have be disabled
+3. Users within $Target OU will be disabled and or Deleted
 
 #>
 
@@ -28,21 +28,21 @@ $Users = Get-ADUser -Filter { LastLogonDate -lt $InactiveDate -and Enabled -eq $
 $Users | Export-CSV C:\Temp\StaleObjects.csv
 
 # Read user sAMAccountNames from csv file and move to Target OU.
-$users= Import-Csv -Path C:\Imports\StaleObjects-2021.csv
+$Users= Import-Csv -Path C:\Imports\StaleObjects-2021.csv
   
-foreach ($user in $users) {
+foreach ($User in $Users) {
 Get-ADUser $User.sAMAccountName | Move-ADObject -TargetPath $TargetOU }
 
 <# Read user sAMAccountNames from array and move to Target OU. 
-foreach ($user in $users) {
+foreach ($User in $Users) {
 Get-ADUser $User.sAmAccountName | Move-ADObject -TargetPath $TargetOU }
 #>
 
 <#
 Disable Protect From Accidental Deletion by OU
 $Users = Get-ADUser -ldapfilter “(objectclass=user)” -searchbase "$TargetOU"
-ForEach($user in $users) {
-Set-ADObject -Identity $user -ProtectedFromAccidentalDeletion:$false
+ForEach($User in $Users) {
+Set-ADObject -Identity $User -ProtectedFromAccidentalDeletion:$false
 }
 #>
 
