@@ -50,4 +50,5 @@ Set-ADObject -Identity $User -ProtectedFromAccidentalDeletion:$false
 Delete Inactive Users
 ForEach ($User in $Users){
 Remove-ADUser -Identity $User.sAmAccountName -Confirm:$false
+}
 #>
