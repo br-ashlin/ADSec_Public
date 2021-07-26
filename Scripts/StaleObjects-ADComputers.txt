@@ -3,7 +3,7 @@ Cleanup Stale Objects
 
 Pre-Requisites
 a. Ensure AD Recycle Bin is enabled (Requires Forest Functional Level 2k08 or higher)
-b. Review the options for Disable, Delete and Disable 'Protect from Accidental Deletion' - The sections are commented out to protect the Technician.
+b. Review the options for Disable, Delete and Disable 'Protect from Accidental Deletion'.
 c. Set the target Inactive Days at $DaysInactive
 
 1. Computers within array to be migrated to $TargetOU either via array or CSV, specified by technician

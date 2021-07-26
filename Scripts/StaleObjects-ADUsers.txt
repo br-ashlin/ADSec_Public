@@ -3,7 +3,7 @@ Cleanup Stale Objects
 
 Pre-Requisites
 a. Ensure AD Recycle Bin is enabled (Requires Forest Functional Level 2k08 or higher)
-b. Review the options for Disable, Delete and Disable 'Protect from Accidental Deletion' - The sections are commented out to protect the Technician.
+b. Review the options for Disable, Delete and Disable 'Protect from Accidental Deletion'.
 c. Set the target Inactive Days at $DaysInactive
 
 1. Users within array to be migrated to $TargetOU either via array or CSV, specified by technician
@@ -28,7 +28,7 @@ $Users = Get-ADUser -Filter { LastLogonDate -lt $InactiveDate -and Enabled -eq $
 $Users | Export-CSV C:\Temp\StaleObjects.csv
 
 # Read user sAMAccountNames from csv file and move to Target OU.
-$Users= Import-Csv -Path C:\Imports\StaleObjects-2021.csv
+$Users = Import-Csv -Path C:\Imports\StaleObjects-2021.csv
   
 foreach ($User in $Users) {
 Get-ADUser $User.sAMAccountName | Move-ADObject -TargetPath $TargetOU }
@@ -42,7 +42,6 @@ $Users = Get-ADUser -ldapfilter “(objectclass=user)” -searchbase "$TargetOU"
 ForEach($User in $Users) {
 Set-ADObject -Identity $User -ProtectedFromAccidentalDeletion:$false
 }
-
 
 # Delete Inactive Users
 ForEach ($User in $Users){
