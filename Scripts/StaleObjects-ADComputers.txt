@@ -28,7 +28,7 @@ $Computers = Get-ADComputer -Filter { LastLogonDate -lt $InactiveDate -and Enabl
 $Computers | Export-CSV C:\Temp\StaleObjects.csv
 
 # Read Computer sAMAccountNames from csv file and move to Target OU.
-$Computers= Import-Csv -Path C:\Imports\StaleObjects-2021.csv
+$Computers = Import-Csv -Path C:\Imports\StaleObjects-2021.csv
   
 foreach ($Computer in $Computers) {
 Get-ADComputer $Computer.sAMAccountName | Move-ADObject -TargetPath $TargetOU }
