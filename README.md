@@ -10,4 +10,4 @@ Public Active Directory Security scripts to perform reporting and management of 
 	- Distribution Groups
 
 - Permissions Delegation
-- 	- GPO Delegation
+	- GPO Delegation
