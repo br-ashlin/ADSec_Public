@@ -8,3 +8,6 @@ Public Active Directory Security scripts to perform reporting and management of 
 	- OUs
 	- Security Groups
 	- Distribution Groups
+
+- Permissions Delegation
+- 	- GPO Delegation
