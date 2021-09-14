@@ -2,8 +2,8 @@
 Script will search GPOs in domain and delegate desired permissions to requested Active Directory Group	
 #>
 
-$domain = "oceania.domain.com"
-$adgroup = "T1_OCEANIA_ADS"
+$domain = "contoso.domain.com"
+$adgroup = "T1_ADSEC_ADS"
 $lvl = "GpoEditDeleteModifySecurity"
 
 #Get SID of required AD Group
