@@ -38,10 +38,9 @@ The symbols in this table defined as follows:
 
 (-) denotes when credentials are not exposed.
 (v) denotes when credentials are exposed.
-
-
-
-
+#
+#
+#
 
 
 | Logon type                                 | #  | Authenticators accepted                         | Reusable credentials in LSA session                                 | Examples                                                                                                                                                                   |
