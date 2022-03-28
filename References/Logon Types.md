@@ -41,6 +41,9 @@ The symbols in this table defined as follows:
 
 
 
+
+
+
 | Logon type                                 | #  | Authenticators accepted                         | Reusable credentials in LSA session                                 | Examples                                                                                                                                                                   |
 | ------------------------------------------ | -- | ----------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Interactive (also known as, Logon locally) | 2  | <p>Password, Smartcard,<br>other</p>            | Yes                                                                 | <p>Console logon;<br>RUNAS;<br>Hardware remote control solutions (such as Network KVM or Remote Access / Lights-Out Card in server)<br>IIS Basic Auth (before IIS 6.0)</p> |
