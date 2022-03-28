@@ -14,7 +14,8 @@ The symbols in this table defined as follows:
 (-) denotes when credentials are not exposed.
 (v) denotes when credentials are exposed.
 
-
+  
+   
 
 | Connection method                                | Logon type            | Reusable credentials on destination | Comments                                                                                                                                      |
 | ------------------------------------------------ | --------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,7 +46,10 @@ For web authentication, use the reference from the table below:
 
 
 
-
+  
+  
+  
+  
 
 ## Column definitions:
 
