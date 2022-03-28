@@ -2,7 +2,7 @@
 
 
 
-# Column Definitions:
+## Column Definitions:
 
 Logon type - Identifies the logon type initiated by the connection.
 Reusable credentials on destination - Indicates that the following credential types will be stored in LSASS process memory on the destination computer where the specified account is logged on locally:
@@ -47,7 +47,7 @@ For web authentication, use the reference from the table below:
 
 
 
-# Column definitions:
+## Column definitions:
 
 * **Logon type** - The type of logon requested.
 * **#** - The numeric identifier for the logon type that is reported in audit events in the Security event log.
