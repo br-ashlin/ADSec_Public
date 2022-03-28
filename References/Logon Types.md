@@ -1,5 +1,21 @@
 # Logon Types
 
+
+
+# Column Definitions:
+
+Logon type - Identifies the logon type initiated by the connection.
+Reusable credentials on destination - Indicates that the following credential types will be stored in LSASS process memory on the destination computer where the specified account is logged on locally:
+LM and NT hashes
+Kerberos TGTs
+Plaintext password (if applicable).
+The symbols in this table defined as follows:
+
+(-) denotes when credentials are not exposed.
+(v) denotes when credentials are exposed.
+
+
+
 | Connection method                                | Logon type            | Reusable credentials on destination | Comments                                                                                                                                      |
 | ------------------------------------------------ | --------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Log on at console                                | Interactive           | v                                   | Includes hardware remote access / lights-out cards and network KVMs.                                                                          |
@@ -27,20 +43,18 @@ For web authentication, use the reference from the table below:
 | IIS "Basic Authentication"              | <p>NetworkCleartext<br>(IIS 6.0+)</p><p>Interactive<br>(prior to IIS 6.0)</p> | v                                   |                              |
 | IIS "Integrated Windows Authentication" | Network                                                                       | -                                   | NTLM and Kerberos Providers. |
 
-# Column Definitions:
 
-Logon type - Identifies the logon type initiated by the connection.
-Reusable credentials on destination - Indicates that the following credential types will be stored in LSASS process memory on the destination computer where the specified account is logged on locally:
-LM and NT hashes
-Kerberos TGTs
-Plaintext password (if applicable).
-The symbols in this table defined as follows:
 
-(-) denotes when credentials are not exposed.
-(v) denotes when credentials are exposed.
-#
-#
-#
+
+
+# Column definitions:
+
+* **Logon type** - The type of logon requested.
+* **#** - The numeric identifier for the logon type that is reported in audit events in the Security event log.
+* **Authenticators accepted** - Indicates which types of authenticators are able to initiate a logon of this type.
+* **Reusable credentials in LSA session** - Indicates whether the logon type results in the LSA session holding credentials, such as plaintext passwords, NT hashes, or Kerberos tickets that could be used to authenticate to other network resources.
+* **Examples** - List of common scenarios in which the logon type is used.
+
 
 
 | Logon type                                 | #  | Authenticators accepted                         | Reusable credentials in LSA session                                 | Examples                                                                                                                                                                   |
@@ -53,13 +67,7 @@ The symbols in this table defined as follows:
 | NewCredentials                             | 9  | Password                                        | Yes                                                                 | RUNAS /NETWORK                                                                                                                                                             |
 | RemoteInteractive                          | 10 | <p>Password, Smartcard,<br>other</p>            | Yes                                                                 | Remote Desktop (formerly known as "Terminal Services")                                                                                                                     |
 
-# Column definitions:
 
-* **Logon type** - The type of logon requested.
-* **#** - The numeric identifier for the logon type that is reported in audit events in the Security event log.
-* **Authenticators accepted** - Indicates which types of authenticators are able to initiate a logon of this type.
-* **Reusable credentials in LSA session** - Indicates whether the logon type results in the LSA session holding credentials, such as plaintext passwords, NT hashes, or Kerberos tickets that could be used to authenticate to other network resources.
-* **Examples** - List of common scenarios in which the logon type is used.
 
 
 
