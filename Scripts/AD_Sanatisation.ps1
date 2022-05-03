@@ -74,10 +74,10 @@ $mailenabled | Select sAmAccountName, Mail | Out-File "$logdir\mail-enabled-acco
 
 #Output Counts for Variables
 
-Write-Host "Resource Accounts in Phase 3:"$resource.Count  -ForegroundColor Yellow
-Write-Host "Disabled Accounts in Phase 3:"$disabled.count  -ForegroundColor yellow
-Write-Host "Locked Out Accounts in Phase 3:"$Locked.count  -ForegroundColor yellow
-Write-Host "Accounts with Expired Passwords in Phase 3:"$PassExp.count  -ForegroundColor yellow
-Write-Host "Stale Accounts in Phase 3:"$Stale.count  -ForegroundColor yellow
-Write-Host "Users could not be found in Phase 3:"$failedusers.Count  -ForegroundColor Yellow
-Write-Host  "Users are mail-enabled in Phase 3:"$mailenabled.Count -ForegroundColor Yellow
+Write-Host "Resource Accounts:"$resource.Count  -ForegroundColor Yellow
+Write-Host "Disabled Accounts"$disabled.count  -ForegroundColor yellow
+Write-Host "Locked Out Accounts:"$Locked.count  -ForegroundColor yellow
+Write-Host "Accounts with Expired Passwords:"$PassExp.count  -ForegroundColor yellow
+Write-Host "Stale Accounts:"$Stale.count  -ForegroundColor yellow
+Write-Host "Users could not be found:"$failedusers.Count  -ForegroundColor Yellow
+Write-Host "Users are mail-enabled:"$mailenabled.Count -ForegroundColor Yellow
