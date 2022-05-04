@@ -22,7 +22,7 @@ ForEach ($acc in $targetacc) {
 Write-Host ' '
 Write-Host "Checking details of $acc from Active Directory" -ForegroundColor Cyan
 Write-Host ' '
-Get-ADUser -Filter {sAMAccountName -like $acc} -Properties *  | Select-Object DisplayName, sAMAccountName, DistinguishedName, mail, manager,  LastLogonDate, Whencreated, enabled, PasswordLastSet, PasswordNeverExpires, KerberosEncryptionType, TrustedForDelegation, AccountNotDelegated, Description, info 
+Get-ADUser -Filter {sAMAccountName -like $acc} -Properties *  | Select-Object DisplayName, sAMAccountName, DistinguishedName, mail, manager,  LastLogonDate, Whencreated, enabled, PasswordLastSet, PasswordNeverExpires, KerberosEncryptionType, TrustedForDelegation, AccountNotDelegated, CannotChangePassword, Description, info 
 
 # Get LogonWorkstation & Group Attributes
 $logonworkstations = Get-ADUser -Filter {sAMAccountName -like $acc} -Properties *  | Select-Object -ExpandProperty LogonWorkstations
