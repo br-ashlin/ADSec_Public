@@ -1,9 +1,8 @@
 #Ben Ashlin for AD Discovery and Sanatisation
 
-#import-module ActiveDirectory
-import-module C:\Apps\ADModule\Microsoft.ActiveDirectory.Management.dll
+import-module ActiveDirectory
 
-#Variables
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
 
 $usernames = Get-Content 'C:\Temp\Ben\Scripts\Users.txt'                   # Input for Users to query
 $date = (Get-Date)
@@ -22,7 +21,8 @@ $mailenabled = @()
 $manager = @()
 $info = @()
 
-#Sanatize List
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
+
 
 foreach ($user in $usernames) {
 
@@ -66,8 +66,7 @@ $stale = $sanatisedusers | Where-Object {($_.LastLogonDate -lt $IncactiveDate) -
 $manager = $sanatisedusers | Where-Object {$_.Manager -ne $NULL -AND ($_.Enabled -eq $true)}
 $info = $sanatisedusers | Where-Object {($_.Info -ne $NULL) -AND ($_.Enabled -eq $true)}
 
-
-
+#-----------------------------------------------------------[Execution]------------------------------------------------------------
 
 #Out to File for Variables
 
@@ -82,14 +81,16 @@ $manager | Select sAmAccountName, Manager | Export-CSV "$logdir\manager-accounts
 $info | Select sAmAccountName, Info | Export-CSV "$logdir\info-accounts.csv" -Append
 
 
-#Output Counts for Variables
-
-Write-Host "Resource Accounts in Phase 3:"$resource.Count  -ForegroundColor Yellow
-Write-Host "Disabled Accounts in Phase 3:"$disabled.count  -ForegroundColor yellow
-Write-Host "Locked Out Accounts in Phase 3:"$Locked.count  -ForegroundColor yellow
-Write-Host "Accounts with Expired Passwords in Phase 3:"$PassExp.count  -ForegroundColor yellow
-Write-Host "Stale Accounts in Phase 3:"$Stale.count  -ForegroundColor yellow
-Write-Host "Users could not be found in Phase 3:"$failedusers.Count  -ForegroundColor Yellow
-Write-Host "Users are mail-enabled in Phase 3:"$mailenabled.Count -ForegroundColor Yellow
-Write-Host "Users with Managers / Owners in Phase 3:"$manager.count -ForegroundColor Yellow
-Write-Host "Users with info in Phase 3:"$info.count -ForegroundColor Yellow
+#Out Counts for Variables
+Write-Host "Total Accounts:" $usernames.count  -ForegroundColor Yellow
+Write-Host "Total Accounts less Disabled & Cannot be Found:" $totalsanatised.count  -ForegroundColor Yellow
+Write-Host "Users could not be Found:"$failedusers.Count  -ForegroundColor Yellow
+Write-Host "Disabled Accounts:"$disabled.count  -ForegroundColor yellow
+Write-Host "Locked Out Accounts:"$Locked.count  -ForegroundColor yellow
+Write-Host "Resource Accounts:"$resource.Count  -ForegroundColor Yellow
+Write-Host "Accounts with Expired Passwords:"$PassExp.count  -ForegroundColor yellow
+Write-Host "Stale Accounts:"$Stale.count  -ForegroundColor yellow
+Write-Host "Resource Accounts:"$resource.Count  -ForegroundColor Yellow
+Write-Host "Users are mail-enabled:"$mailenabled.Count -ForegroundColor Yellow
+Write-Host "Users with Managers / Owners:"$manager.count -ForegroundColor Yellow
+Write-Host "Users with info:"$info.count -ForegroundColor Yellow
