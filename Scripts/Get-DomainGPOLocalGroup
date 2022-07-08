@@ -1,0 +1,320 @@
+function Get-DomainGPOLocalGroup {
+<#
+.SYNOPSIS
+
+Returns all GPOs in a domain that modify local group memberships through 'Restricted Groups'
+or Group Policy preferences. Also return their user membership mappings, if they exist.
+
+Author: @harmj0y  
+License: BSD 3-Clause  
+Required Dependencies: Get-DomainGPO, Get-GptTmpl, Get-GroupsXML, ConvertTo-SID, ConvertFrom-SID  
+
+.DESCRIPTION
+
+First enumerates all GPOs in the current/target domain using Get-DomainGPO with passed
+arguments, and for each GPO checks if 'Restricted Groups' are set with GptTmpl.inf or
+group membership is set through Group Policy Preferences groups.xml files. For any
+GptTmpl.inf files found, the file is parsed with Get-GptTmpl and any 'Group Membership'
+section data is processed if present. Any found Groups.xml files are parsed with
+Get-GroupsXML and those memberships are returned as well.
+
+.PARAMETER Identity
+
+A display name (e.g. 'Test GPO'), DistinguishedName (e.g. 'CN={F260B76D-55C8-46C5-BEF1-9016DD98E272},CN=Policies,CN=System,DC=testlab,DC=local'),
+GUID (e.g. '10ec320d-3111-4ef4-8faf-8f14f4adc789'), or GPO name (e.g. '{F260B76D-55C8-46C5-BEF1-9016DD98E272}'). Wildcards accepted.
+
+.PARAMETER ResolveMembersToSIDs
+
+Switch. Indicates that any member names should be resolved to their domain SIDs.
+
+.PARAMETER Domain
+
+Specifies the domain to use for the query, defaults to the current domain.
+
+.PARAMETER LDAPFilter
+
+Specifies an LDAP query string that is used to filter Active Directory objects.
+
+.PARAMETER SearchBase
+
+The LDAP source to search through, e.g. "LDAP://OU=secret,DC=testlab,DC=local"
+Useful for OU queries.
+
+.PARAMETER Server
+
+Specifies an Active Directory server (domain controller) to bind to.
+
+.PARAMETER SearchScope
+
+Specifies the scope to search under, Base/OneLevel/Subtree (default of Subtree).
+
+.PARAMETER ResultPageSize
+
+Specifies the PageSize to set for the LDAP searcher object.
+
+.PARAMETER ServerTimeLimit
+
+Specifies the maximum amount of time the server spends searching. Default of 120 seconds.
+
+.PARAMETER Tombstone
+
+Switch. Specifies that the searcher should also return deleted/tombstoned objects.
+
+.PARAMETER Credential
+
+A [Management.Automation.PSCredential] object of alternate credentials
+for connection to the target domain.
+
+.EXAMPLE
+
+Get-DomainGPOLocalGroup
+
+Returns all local groups set by GPO along with their members and memberof.
+
+.EXAMPLE
+
+Get-DomainGPOLocalGroup -ResolveMembersToSIDs
+
+Returns all local groups set by GPO along with their members and memberof,
+and resolve any members to their domain SIDs.
+
+.EXAMPLE
+
+'{0847C615-6C4E-4D45-A064-6001040CC21C}' | Get-DomainGPOLocalGroup
+
+Return any GPO-set groups for the GPO with the given name/GUID.
+
+.EXAMPLE
+
+Get-DomainGPOLocalGroup 'Desktops'
+
+Return any GPO-set groups for the GPO with the given display name.
+
+.EXAMPLE
+
+$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
+$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
+Get-DomainGPOLocalGroup -Credential $Cred
+
+.LINK
+
+https://morgansimonsenblog.azurewebsites.net/tag/groups/
+#>
+
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '')]
+    [OutputType('PowerView.GPOGroup')]
+    [CmdletBinding()]
+    Param(
+        [Parameter(Position = 0, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [Alias('DistinguishedName', 'SamAccountName', 'Name')]
+        [String[]]
+        $Identity,
+
+        [Switch]
+        $ResolveMembersToSIDs,
+
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $Domain,
+
+        [ValidateNotNullOrEmpty()]
+        [Alias('Filter')]
+        [String]
+        $LDAPFilter,
+
+        [ValidateNotNullOrEmpty()]
+        [Alias('ADSPath')]
+        [String]
+        $SearchBase,
+
+        [ValidateNotNullOrEmpty()]
+        [Alias('DomainController')]
+        [String]
+        $Server,
+
+        [ValidateSet('Base', 'OneLevel', 'Subtree')]
+        [String]
+        $SearchScope = 'Subtree',
+
+        [ValidateRange(1, 10000)]
+        [Int]
+        $ResultPageSize = 200,
+
+        [ValidateRange(1, 10000)]
+        [Int]
+        $ServerTimeLimit,
+
+        [Switch]
+        $Tombstone,
+
+        [Management.Automation.PSCredential]
+        [Management.Automation.CredentialAttribute()]
+        $Credential = [Management.Automation.PSCredential]::Empty
+    )
+
+    BEGIN {
+        $SearcherArguments = @{}
+        if ($PSBoundParameters['Domain']) { $SearcherArguments['Domain'] = $Domain }
+        if ($PSBoundParameters['LDAPFilter']) { $SearcherArguments['LDAPFilter'] = $Domain }
+        if ($PSBoundParameters['SearchBase']) { $SearcherArguments['SearchBase'] = $SearchBase }
+        if ($PSBoundParameters['Server']) { $SearcherArguments['Server'] = $Server }
+        if ($PSBoundParameters['SearchScope']) { $SearcherArguments['SearchScope'] = $SearchScope }
+        if ($PSBoundParameters['ResultPageSize']) { $SearcherArguments['ResultPageSize'] = $ResultPageSize }
+        if ($PSBoundParameters['ServerTimeLimit']) { $SearcherArguments['ServerTimeLimit'] = $ServerTimeLimit }
+        if ($PSBoundParameters['Tombstone']) { $SearcherArguments['Tombstone'] = $Tombstone }
+        if ($PSBoundParameters['Credential']) { $SearcherArguments['Credential'] = $Credential }
+
+        $ConvertArguments = @{}
+        if ($PSBoundParameters['Domain']) { $ConvertArguments['Domain'] = $Domain }
+        if ($PSBoundParameters['Server']) { $ConvertArguments['Server'] = $Server }
+        if ($PSBoundParameters['Credential']) { $ConvertArguments['Credential'] = $Credential }
+
+        $SplitOption = [System.StringSplitOptions]::RemoveEmptyEntries
+    }
+
+    PROCESS {
+        if ($PSBoundParameters['Identity']) { $SearcherArguments['Identity'] = $Identity }
+
+        Get-DomainGPO @SearcherArguments | ForEach-Object {
+            $GPOdisplayName = $_.displayname
+            $GPOname = $_.name
+            $GPOPath = $_.gpcfilesyspath
+
+            $ParseArgs =  @{ 'GptTmplPath' = "$GPOPath\MACHINE\Microsoft\Windows NT\SecEdit\GptTmpl.inf" }
+            if ($PSBoundParameters['Credential']) { $ParseArgs['Credential'] = $Credential }
+
+            # first parse the 'Restricted Groups' file (GptTmpl.inf) if it exists
+            $Inf = Get-GptTmpl @ParseArgs
+
+            if ($Inf -and ($Inf.psbase.Keys -contains 'Group Membership')) {
+                $Memberships = @{}
+
+                # parse the members/memberof fields for each entry
+                ForEach ($Membership in $Inf.'Group Membership'.GetEnumerator()) {
+                    $Group, $Relation = $Membership.Key.Split('__', $SplitOption) | ForEach-Object {$_.Trim()}
+                    # extract out ALL members
+                    $MembershipValue = $Membership.Value | Where-Object {$_} | ForEach-Object { $_.Trim('*') } | Where-Object {$_}
+
+                    if ($PSBoundParameters['ResolveMembersToSIDs']) {
+                        # if the resulting member is username and not a SID, attempt to resolve it
+                        $GroupMembers = @()
+                        ForEach ($Member in $MembershipValue) {
+                            if ($Member -and ($Member.Trim() -ne '')) {
+                                if ($Member -notmatch '^S-1-.*') {
+                                    $ConvertToArguments = @{'ObjectName' = $Member}
+                                    if ($PSBoundParameters['Domain']) { $ConvertToArguments['Domain'] = $Domain }
+                                    $MemberSID = ConvertTo-SID @ConvertToArguments
+
+                                    if ($MemberSID) {
+                                        $GroupMembers += $MemberSID
+                                    }
+                                    else {
+                                        $GroupMembers += $Member
+                                    }
+                                }
+                                else {
+                                    $GroupMembers += $Member
+                                }
+                            }
+                        }
+                        $MembershipValue = $GroupMembers
+                    }
+
+                    if (-not $Memberships[$Group]) {
+                        $Memberships[$Group] = @{}
+                    }
+                    if ($MembershipValue -isnot [System.Array]) {$MembershipValue = @($MembershipValue)}
+                    $Memberships[$Group].Add($Relation, $MembershipValue)
+                }
+
+                ForEach ($Membership in $Memberships.GetEnumerator()) {
+                    if ($Membership -and $Membership.Key -and ($Membership.Key -match '^\*')) {
+                        # if the SID is already resolved (i.e. begins with *) try to resolve SID to a name
+                        $GroupSID = $Membership.Key.Trim('*')
+                        if ($GroupSID -and ($GroupSID.Trim() -ne '')) {
+                            $GroupName = ConvertFrom-SID -ObjectSID $GroupSID @ConvertArguments
+                        }
+                        else {
+                            $GroupName = $False
+                        }
+                    }
+                    else {
+                        $GroupName = $Membership.Key
+
+                        if ($GroupName -and ($GroupName.Trim() -ne '')) {
+                            if ($Groupname -match 'Administrators') {
+                                $GroupSID = 'S-1-5-32-544'
+                            }
+                            elseif ($Groupname -match 'Remote Desktop') {
+                                $GroupSID = 'S-1-5-32-555'
+                            }
+                            elseif ($Groupname -match 'Guests') {
+                                $GroupSID = 'S-1-5-32-546'
+                            }
+                            elseif ($GroupName.Trim() -ne '') {
+                                $ConvertToArguments = @{'ObjectName' = $Groupname}
+                                if ($PSBoundParameters['Domain']) { $ConvertToArguments['Domain'] = $Domain }
+                                $GroupSID = ConvertTo-SID @ConvertToArguments
+                            }
+                            else {
+                                $GroupSID = $Null
+                            }
+                        }
+                    }
+
+                    $GPOGroup = New-Object PSObject
+                    $GPOGroup | Add-Member Noteproperty 'GPODisplayName' $GPODisplayName
+                    $GPOGroup | Add-Member Noteproperty 'GPOName' $GPOName
+                    $GPOGroup | Add-Member Noteproperty 'GPOPath' $GPOPath
+                    $GPOGroup | Add-Member Noteproperty 'GPOType' 'RestrictedGroups'
+                    $GPOGroup | Add-Member Noteproperty 'Filters' $Null
+                    $GPOGroup | Add-Member Noteproperty 'GroupName' $GroupName
+                    $GPOGroup | Add-Member Noteproperty 'GroupSID' $GroupSID
+                    $GPOGroup | Add-Member Noteproperty 'GroupMemberOf' $Membership.Value.Memberof
+                    $GPOGroup | Add-Member Noteproperty 'GroupMembers' $Membership.Value.Members
+                    $GPOGroup.PSObject.TypeNames.Insert(0, 'PowerView.GPOGroup')
+                    $GPOGroup
+                }
+            }
+
+            # now try to the parse group policy preferences file (Groups.xml) if it exists
+            $ParseArgs =  @{
+                'GroupsXMLpath' = "$GPOPath\MACHINE\Preferences\Groups\Groups.xml"
+            }
+
+            Get-GroupsXML @ParseArgs | ForEach-Object {
+                if ($PSBoundParameters['ResolveMembersToSIDs']) {
+                    $GroupMembers = @()
+                    ForEach ($Member in $_.GroupMembers) {
+                        if ($Member -and ($Member.Trim() -ne '')) {
+                            if ($Member -notmatch '^S-1-.*') {
+
+                                # if the resulting member is username and not a SID, attempt to resolve it
+                                $ConvertToArguments = @{'ObjectName' = $Groupname}
+                                if ($PSBoundParameters['Domain']) { $ConvertToArguments['Domain'] = $Domain }
+                                $MemberSID = ConvertTo-SID -Domain $Domain -ObjectName $Member
+
+                                if ($MemberSID) {
+                                    $GroupMembers += $MemberSID
+                                }
+                                else {
+                                    $GroupMembers += $Member
+                                }
+                            }
+                            else {
+                                $GroupMembers += $Member
+                            }
+                        }
+                    }
+                    $_.GroupMembers = $GroupMembers
+                }
+
+                $_ | Add-Member Noteproperty 'GPODisplayName' $GPODisplayName
+                $_ | Add-Member Noteproperty 'GPOName' $GPOName
+                $_ | Add-Member Noteproperty 'GPOType' 'GroupPolicyPreferences'
+                $_.PSObject.TypeNames.Insert(0, 'PowerView.GPOGroup')
+                $_
+            }
+        }
+    }
+}
